@@ -7,6 +7,13 @@ import subprocess
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 from distutils.version import LooseVersion
+import distutils.command.build as _build
+import os
+import sys
+from distutils import spawn
+from distutils.sysconfig import get_python_lib
+
+__version__ = "0.0.1"
 
 
 # Define the CMake extension
@@ -56,7 +63,7 @@ class CMakeBuild(build_ext):
             build_args += ["--", "/m"]
         else:
             cmake_args += ["-DCMAKE_BUILD_TYPE=" + cfg]
-            build_args += ["--", "-j2"]
+            build_args += ["--", "-j4"]
 
         env = os.environ.copy()
         env["CXXFLAGS"] = '{} -DVERSION_INFO=\\"{}\\"'.format(
@@ -74,11 +81,12 @@ class CMakeBuild(build_ext):
 
 setup(
     name="emoc_cpp",
-    version="0.1",
-    author="Your Name",
-    author_email="your.email@example.com",
-    description="A test project using pybind11 and CMake",
+    version=__version__,
+    author="Shasha Zhou, Mingyu Huang, Tian Huang, Sun Lei and Ke Li",
+    author_email="sz484@exeter.ac.uk",
+    description="This is the C++ code for the EMOC+X platform.",
     long_description="",
+    install_requires=["pybind11"],
     ext_modules=[CMakeExtension("emoc_cpp")],
     cmdclass=dict(build_ext=CMakeBuild),
     zip_safe=False,
