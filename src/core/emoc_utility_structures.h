@@ -1,4 +1,5 @@
 #pragma once
+
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -25,41 +26,39 @@ namespace emoc
 		int thread_num;
 
 		// custom problem and initial population variables for python dlls
-		Problem* custom_problem = nullptr;
+		Problem *custom_problem = nullptr;
 		std::vector<std::vector<double>> custom_initial_pop;
 
 	public:
-		EMOCParameters() :
-			algorithm_name("NSGA2"),
-			problem_name("ZDT1"),
-			is_plot(false),
-			population_num(100),
-			decision_num(30),
-			objective_num(2),
-			max_evaluation(25000),
-			output_interval(EMOC_INF),
-			runs_num(1),
-			is_open_multithread(false),
-			thread_num(0)
+		EMOCParameters() : algorithm_name("NSGA2"),
+						   problem_name("ZDT1"),
+						   is_plot(false),
+						   population_num(100),
+						   decision_num(30),
+						   objective_num(2),
+						   max_evaluation(25000),
+						   output_interval(EMOC_INF),
+						   runs_num(1),
+						   is_open_multithread(false),
+						   thread_num(0)
 		{
 		}
 
 		~EMOCParameters() {}
 
 		// custom problem and initial population function for python dlls
-		inline void SetProblem(Problem* problem) { custom_problem = problem; }
+		inline void SetProblem(Problem *problem) { custom_problem = problem; }
 		inline void SetInitialPop(std::vector<std::vector<double>> initial_pop) { custom_initial_pop = initial_pop; }
 	};
 
-
 	struct EMOCExperimentTask
 	{
-		EMOCParameters para;	// We let each task own a copy of parameter to prevent some potential bugs.
-		int run_index;			// refer to which run in current parameter needed runs
-		int parameter_index;	// refer to which parameter in received parameter vectors
+		EMOCParameters para; // We let each task own a copy of parameter to prevent some potential bugs.
+		int run_index;		 // refer to which run in current parameter needed runs
+		int parameter_index; // refer to which parameter in received parameter vectors
 	};
 
-	struct  MetricHistory
+	struct MetricHistory
 	{
 		// history metric for each run
 		std::vector<double> metric_history;
@@ -69,8 +68,8 @@ namespace emoc
 		double metric_mean = 0.0, metric_std = 0.0, metric_median = 0.0, metric_iqr = 0.0, metric_best = 0.0;
 
 		// [0]:mean best compared result [1]:median best compared result [2]:last column compared result
-		int metric_mean_ranksum[3] = { -2, -2, -2 }, metric_mean_signrank[3] = { -2, -2, -2 };
-		int metric_median_ranksum[3] = { -2, -2 , -2 }, metric_median_signrank[3] = { -2, -2, -2 };
+		int metric_mean_ranksum[3] = {-2, -2, -2}, metric_mean_signrank[3] = {-2, -2, -2};
+		int metric_median_ranksum[3] = {-2, -2, -2}, metric_median_signrank[3] = {-2, -2, -2};
 	};
 
 	// for (multi-thread or multi-run) epxeriment result
@@ -92,7 +91,6 @@ namespace emoc
 
 		EMOCMultiThreadResult()
 		{
-
 		}
 
 		EMOCMultiThreadResult(int run_num)
@@ -120,7 +118,7 @@ namespace emoc
 	struct EMOCSingleThreadResult
 	{
 		std::string description;
-		EMOCParameters para;		// for parameter information accesses easily
+		EMOCParameters para; // for parameter information accesses easily
 		double last_igd;
 		double last_hv;
 		double last_gd;
@@ -164,14 +162,15 @@ namespace emoc
 	struct CrossoverParameter
 	{
 		double pro = 1.0;
-		double index1 = 20.0; 
-		double index2 = 20.0;	// additional parameter, use it when necessary
+		double index1 = 20.0;
+		double index2 = 20.0; // additional parameter, use it when necessary
 	};
 
 	struct MutationParameter
 	{
 		double pro = 1.0;
 		double index1 = 20.0;
-		double index2 = 20.0;   // additional parameter, use it when necessary
+		double index2 = 20.0; // additional parameter, use it when necessary
 	};
+
 }

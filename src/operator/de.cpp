@@ -2,10 +2,11 @@
 
 #include "random/random.h"
 
-namespace emoc {
+namespace emoc
+{
 
-	void DE(Individual *parent1, Individual *parent2, Individual *parent3, Individual *offspring, 
-		std::vector<double>& lower_bound, std::vector<double>& upper_bound, CrossoverParameter& cross_para)
+	void DE(Individual *parent1, Individual *parent2, Individual *parent3, Individual *offspring,
+			DecisionSpace dec_space, CrossoverParameter &cross_para)
 	{
 		double value = 0.0;
 		int dec_num = parent1->dec_.size();
@@ -13,21 +14,29 @@ namespace emoc {
 
 		for (int i = 0; i < dec_num; ++i)
 		{
-			double yl = lower_bound[i];
-			double yu = upper_bound[i];
-
-			if (randomperc() < cross_para.pro)
+			if (std::holds_alternative<double>(parent1->dec_[i]))
 			{
-				value = parent1->dec_[i] + F * (parent2->dec_[i] -parent3->dec_[i]);
-				value = (value > yu) ? yu : (value < yl) ? yl : value;
+				double yl = dec_space.GetLowerBound(i);
+				double yu = dec_space.GetUpperBound(i);
+
+				if (randomperc() < cross_para.pro)
+				{
+					value = std::get<double>(parent1->dec_.at(i)) + F * (std::get<double>(parent2->dec_.at(i)) - std::get<double>(parent3->dec_.at(i)));
+					value = (value > yu) ? yu : (value < yl) ? yl
+															 : value;
+				}
+				else
+				{
+					value = std::get<double>(parent1->dec_.at(i));
+				}
+				offspring->dec_[i] = value;
 			}
 			else
 			{
-				value = parent1->dec_[i];
+				// if the variable is not real, copy the value from parent1. Is it reasonable?
+				offspring->dec_[i] = parent1->dec_[i];
 			}
-			offspring->dec_[i] = value;
 		}
 	}
 
 }
-

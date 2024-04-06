@@ -28,24 +28,24 @@ namespace emoc
 	{
 	}
 
-	void Algorithm::PrintPop()
-	{
-		for (int i = 0; i < real_popnum_; ++i)
-		{
-			std::cout << "population[" << i << "]: \n";
-			std::cout << "--dec--:";
-			for (int j = 0; j < g_GlobalSettings->dec_num_; ++j)
-			{
-				std::cout << g_GlobalSettings->parent_population_[i]->dec_[j] << " ";
-			}
-			std::cout << "\n--obj--:";
-			for (int j = 0; j < g_GlobalSettings->obj_num_; ++j)
-			{
-				std::cout << g_GlobalSettings->parent_population_[i]->obj_[j] << " ";
-			}
-			std::cout << std::endl;
-		}
-	}
+	// void Algorithm::PrintPop()
+	// {
+	// 	for (int i = 0; i < real_popnum_; ++i)
+	// 	{
+	// 		std::cout << "population[" << i << "]: \n";
+	// 		std::cout << "--dec--:";
+	// 		for (int j = 0; j < g_GlobalSettings->dec_num_; ++j)
+	// 		{
+	// 			std::cout << g_GlobalSettings->parent_population_[i]->dec_[j] << " ";
+	// 		}
+	// 		std::cout << "\n--obj--:";
+	// 		for (int j = 0; j < g_GlobalSettings->obj_num_; ++j)
+	// 		{
+	// 			std::cout << g_GlobalSettings->parent_population_[i]->obj_[j] << " ";
+	// 		}
+	// 		std::cout << std::endl;
+	// 	}
+	// }
 
 	void Algorithm::PrintResult()
 	{
@@ -143,9 +143,10 @@ namespace emoc
 
 		for (int i = 0; i < g_GlobalSettings->dec_num_; i++)
 		{
-			double t = ind1->dec_[i];
-			ind1->dec_[i] = ind2->dec_[i];
-			ind2->dec_[i] = t;
+			// double t = ind1->dec_[i];
+			// ind1->dec_[i] = ind2->dec_[i];
+			// ind2->dec_[i] = t;
+			std::swap(ind1->dec_[i], ind2->dec_[i]);
 		}
 
 		for (int i = 0; i < g_GlobalSettings->obj_num_; i++)

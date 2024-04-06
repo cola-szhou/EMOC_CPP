@@ -1,8 +1,10 @@
 #pragma once
 
 #include <vector>
+#include <core/variable.h>
 
-namespace emoc {
+namespace emoc
+{
 
 	// Class for each solution in optimization process, and
 	// it holds some basic datas of each solution.
@@ -16,7 +18,8 @@ namespace emoc {
 		int rank_;
 		double fitness_;
 
-		std::vector<double> dec_;
+		// std::vector<double> dec_;
+		std::vector<VariantValue> dec_;
 		std::vector<double> obj_;
 		std::vector<double> con_;
 	};

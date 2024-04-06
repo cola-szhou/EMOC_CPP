@@ -18,7 +18,7 @@ namespace emoc
 		Algorithm(Py_Global *global, Problem *problem);
 		virtual ~Algorithm();
 
-		void PrintPop();
+		// void PrintPop();
 		void PrintResult();
 		virtual void Solve() = 0;
 

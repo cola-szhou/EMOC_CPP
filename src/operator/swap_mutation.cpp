@@ -4,9 +4,12 @@
 
 #include "random/random.h"
 
-namespace emoc {
+// SwapMutation is for all encoding types, except permutation encoding
 
-	void SwapMutation(Individual* ind, MutationParameter& mutation_para)
+namespace emoc
+{
+
+	void SwapMutation(Individual *ind, MutationParameter &mutation_para)
 	{
 		int dec_num = ind->dec_.size();
 
@@ -15,10 +18,9 @@ namespace emoc {
 
 		if (randomperc() < 1.0 / mutation_para.pro)
 		{
-			double temp = ind->dec_[rand1];
+			auto &temp = ind->dec_.at(rand1);
 			ind->dec_[rand1] = ind->dec_[rand2];
 			ind->dec_[rand2] = temp;
 		}
 	}
 }
-

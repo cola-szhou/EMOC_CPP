@@ -18,7 +18,7 @@
 #include <sys/types.h>
 #include <cstring>
 #include <unistd.h>
-#elif defined(__APPLE__)// macos
+#elif defined(__APPLE__) // macos
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <cstring>
@@ -34,15 +34,16 @@
 // #include "algorithm/algorithm_factory.h"
 // #include "problem/problem_factory.h"
 
-namespace emoc {
+namespace emoc
+{
 
 	static void PrintObjective(const char *filename, int obj_num, Individual **pop_table, int pop_num)
 	{
 		FILE *fpt = fopen(filename, "w");
-		
-		if(fpt == nullptr)
+
+		if (fpt == nullptr)
 		{
-			std::cout <<"Can not open "<< filename << " !." << std::endl;
+			std::cout << "Can not open " << filename << " !." << std::endl;
 			std::cout << "Press enter to exit" << std::endl;
 			std::cout << strerror(errno) << "\n";
 			std::cin.get();
@@ -61,68 +62,66 @@ namespace emoc {
 		fclose(fpt);
 	}
 
-	static void PrintDecision(const char* filename, int dec_num, Individual** pop_table, int pop_num)
+	// static void PrintDecision(const char* filename, int dec_num, Individual** pop_table, int pop_num)
+	// {
+	// 	FILE* fpt = fopen(filename, "w");
+
+	// 	if (fpt == nullptr)
+	// 	{
+	// 		std::cout << "Can not open " << filename << " !." << std::endl;
+	// 		std::cout << "Press enter to exit" << std::endl;
+	// 		std::cout << strerror(errno) << "\n";
+	// 		std::cin.get();
+	// 		exit(-1);
+	// 	}
+
+	// 	for (int i = 0; i < pop_num; ++i)
+	// 	{
+	// 		Individual* ind = pop_table[i];
+	// 		for (int j = 0; j < dec_num; ++j)
+	// 			fprintf(fpt, "%lf\t", ind->dec_[j]);
+	// 		fprintf(fpt, "\n");
+	// 	}
+
+	// 	fflush(fpt);
+	// 	fclose(fpt);
+	// }
+
+	// static void PrintCityPosition(const char *filename, int dec_num, Individual **pop_table,
+	// 							  std::vector<std::vector<double>> positions, int pop_num)
+	// {
+	// 	FILE *fpt = fopen(filename, "w");
+
+	// 	if (fpt == nullptr)
+	// 	{
+	// 		std::cout << "Can not open " << filename << " !." << std::endl;
+	// 		std::cout << "Press enter to exit" << std::endl;
+	// 		std::cout << strerror(errno) << "\n";
+	// 		std::cin.get();
+	// 		exit(-1);
+	// 	}
+
+	// 	Individual *ind = pop_table[0];
+	// 	for (int i = 0; i < dec_num; ++i)
+	// 	{
+	// 		int city_id = (int)(ind->dec_[i]);
+	// 		for (int j = 0; j < positions[city_id].size(); j++)
+	// 			fprintf(fpt, "%lf\t", positions[city_id][j]);
+	// 		fprintf(fpt, "\n");
+	// 	}
+
+	// 	int start_city_id = (int)(ind->dec_[0]);
+	// 	for (int j = 0; j < positions[start_city_id].size(); j++)
+	// 		fprintf(fpt, "%lf\t", positions[start_city_id][j]);
+
+	// 	fflush(fpt);
+	// 	fclose(fpt);
+	// }
+
+	void CopyFile(const char *src, const char *dest)
 	{
-		FILE* fpt = fopen(filename, "w");
-
-		if (fpt == nullptr)
-		{
-			std::cout << "Can not open " << filename << " !." << std::endl;
-			std::cout << "Press enter to exit" << std::endl;
-			std::cout << strerror(errno) << "\n";
-			std::cin.get();
-			exit(-1);
-		}
-
-		for (int i = 0; i < pop_num; ++i)
-		{
-			Individual* ind = pop_table[i];
-			for (int j = 0; j < dec_num; ++j)
-				fprintf(fpt, "%lf\t", ind->dec_[j]);
-			fprintf(fpt, "\n");
-		}
-
-		fflush(fpt);
-		fclose(fpt);
-	}
-
-	static void PrintCityPosition(const char* filename, int dec_num, Individual** pop_table,
-		std::vector<std::vector<double>> positions, int pop_num)
-	{
-		FILE* fpt = fopen(filename, "w");
-
-		if (fpt == nullptr)
-		{
-			std::cout << "Can not open " << filename << " !." << std::endl;
-			std::cout << "Press enter to exit" << std::endl;
-			std::cout << strerror(errno) << "\n";
-			std::cin.get();
-			exit(-1);
-		}
-
-		Individual* ind = pop_table[0];
-		for (int i = 0; i < dec_num; ++i)
-		{
-			int city_id = (int)(ind->dec_[i]);
-			for(int j = 0;j < positions[city_id].size();j++)
-				fprintf(fpt, "%lf\t", positions[city_id][j]);
-			fprintf(fpt, "\n");
-		}
-
-		int start_city_id = (int)(ind->dec_[0]);
-		for (int j = 0; j < positions[start_city_id].size(); j++)
-			fprintf(fpt, "%lf\t", positions[start_city_id][j]);
-		
-
-		fflush(fpt);
-		fclose(fpt);
-	}
-
-
-	void CopyFile(const char* src, const char* dest )
-	{
-		FILE* in = fopen(src, "r+");
-		FILE* out = fopen(dest, "w+");
+		FILE *in = fopen(src, "r+");
+		FILE *out = fopen(dest, "w+");
 
 		char buff[1024];
 		while (int len = fread(buff, 1, sizeof(buff), in))
@@ -134,13 +133,12 @@ namespace emoc {
 		fclose(out);
 	}
 
-	std::vector<std::vector<double>> ReadPop(char* filepath, int obj_num)
+	std::vector<std::vector<double>> ReadPop(char *filepath, int obj_num)
 	{
 		// open pf data file
 		int pop_num = 0;
 		std::vector<std::vector<double>> data;
 		std::fstream data_file(filepath);
-
 
 		if (!data_file)
 		{
@@ -151,7 +149,6 @@ namespace emoc {
 			std::string line;
 			while (getline(data_file, line))
 				pop_num++;
-
 
 			// read the pf data
 			data_file.clear();
@@ -301,7 +298,7 @@ namespace emoc {
 	// 		std::string description;
 	// 		// parameter validity check
 	// 		bool is_valid = CheckEMOCParameter(para, description);
-			
+
 	// 		if (!is_valid)
 	// 		{
 	// 			std::cout << "EMOC WRONG PARAMETER ERROR:\n";
@@ -327,33 +324,33 @@ namespace emoc {
 	// 	}
 	// }
 
-	int CreateDirectory(const std::string& path)
-	{
-		int len = path.length();
-		char tmpDirPath[512] = { 0 };
-		for (int i = 0; i < len; i++)
-		{
-			tmpDirPath[i] = path[i];
-			if (tmpDirPath[i] == '\\' || tmpDirPath[i] == '/')
-			{
-#if defined(_WIN32)
-				if (_access(tmpDirPath, 0) == -1)
-				{
-					int ret = _mkdir(tmpDirPath);
-#elif defined(__linux) || defined(linux)
-				if (access(tmpDirPath, F_OK) == -1)
-				{
-					int ret = mkdir(tmpDirPath, S_IRWXU | S_IRWXG | S_IRWXO);
-#elif defined(__APPLE__)
-				if (access(tmpDirPath, F_OK) == -1)
-				{
-					int ret = mkdir(tmpDirPath, S_IRWXU | S_IRWXG | S_IRWXO);
-#endif
-				}
-			}
-		}
-		return 1;
-	}
+	// 	int CreateDirectory(const std::string &path)
+	// 	{
+	// 		int len = path.length();
+	// 		char tmpDirPath[512] = {0};
+	// 		for (int i = 0; i < len; i++)
+	// 		{
+	// 			tmpDirPath[i] = path[i];
+	// 			if (tmpDirPath[i] == '\\' || tmpDirPath[i] == '/')
+	// 			{
+	// #if defined(_WIN32)
+	// 				if (_access(tmpDirPath, 0) == -1)
+	// 				{
+	// 					int ret = _mkdir(tmpDirPath);
+	// #elif defined(__linux) || defined(linux)
+	// 				if (access(tmpDirPath, F_OK) == -1)
+	// 				{
+	// 					int ret = mkdir(tmpDirPath, S_IRWXU | S_IRWXG | S_IRWXO);
+	// #elif defined(__APPLE__)
+	// 				if (access(tmpDirPath, F_OK) == -1)
+	// 				{
+	// 					int ret = mkdir(tmpDirPath, S_IRWXU | S_IRWXG | S_IRWXO);
+	// #endif
+	// 				}
+	// 			}
+	// 		}
+	// 		return 1;
+	// 	}
 
 	// bool CheckEMOCParameter(const EMOCParameters& para, std::string& description)
 	// {
@@ -391,7 +388,7 @@ namespace emoc {
 	// 		description = "The interval of population save cannot be negative integer!\n\n";
 	// 		res = false;
 	// 	}
-		
+
 	// 	bool is_valid1 = EMOCAlgorithmCheck(algorithm, description);
 	// 	bool is_valid2 = EMOCProblemCheck(problem, M, D, N, evaluation, description);
 

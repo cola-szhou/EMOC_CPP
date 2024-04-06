@@ -6,6 +6,7 @@
 #include "problem/problem.h"
 #include "algorithm/algorithm.h"
 #include <pybind11/pybind11.h>
+#include "core/variable.h"
 
 namespace py = pybind11;
 
@@ -56,7 +57,7 @@ namespace emoc
 
 		// for python dlls
 		void SetCustomInitialPop(std::vector<std::vector<double>> &initial_pop);
-		void SetParam(int dec_num, int obj_num, std::vector<double> lower_bound, std::vector<double> upper_bound, int population_num, int output_interval, int max_evaluation);
+		void SetParam(int dec_num, int obj_num, DecisionSpace dec_space, int population_num, int output_interval, int max_evaluation);
 		void RecordPop(int real_popnum, double runtime);
 
 	public:
@@ -72,8 +73,9 @@ namespace emoc
 		std::vector<Individual *> mixed_population_;
 		std::vector<Record *> record_;
 
-		std::vector<double> dec_lower_bound_; // set by problem's lower bound
-		std::vector<double> dec_upper_bound_; // set by problem's lower bound
+		// std::vector<double> dec_lower_bound_; // set by problem's lower bound
+		// std::vector<double> dec_upper_bound_; // set by problem's lower bound
+		DecisionSpace dec_space_; // set by problem's decision variable space
 
 		SBXPara sbx_parameter_;
 		DEPara de_parameter_;

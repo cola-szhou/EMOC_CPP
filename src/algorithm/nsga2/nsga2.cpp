@@ -12,9 +12,10 @@
 #include "operator/sbx.h"
 #include "random/random.h"
 
-namespace emoc {
+namespace emoc
+{
 
-	NSGA2::NSGA2(Py_Global* global, Problem* problem, double crossover_prob, double eta_c, double mutation_prob, double eta_m) : Algorithm(global, problem)
+	NSGA2::NSGA2(Py_Global *global, Problem *problem, double crossover_prob, double eta_c, double mutation_prob, double eta_m) : Algorithm(global, problem)
 	{
 		// set mutation parameter
 		mutation_para_.pro = mutation_prob;
@@ -27,7 +28,6 @@ namespace emoc {
 
 	NSGA2::~NSGA2()
 	{
-		
 	}
 
 	void NSGA2::Solve()
@@ -37,10 +37,10 @@ namespace emoc {
 		{
 			// generate offspring population
 			Crossover(g_GlobalSettings->parent_population_.data(), g_GlobalSettings->offspring_population_.data());
-			PolynomialMutationPopulation(g_GlobalSettings->offspring_population_.data(), 2 * (real_popnum_ / 2), g_GlobalSettings->dec_lower_bound_, g_GlobalSettings->dec_upper_bound_, mutation_para_);
+			PolynomialMutationPopulation(g_GlobalSettings->offspring_population_.data(), 2 * (real_popnum_ / 2), g_GlobalSettings->dec_space_, mutation_para_);
 			EvaluatePop(g_GlobalSettings->offspring_population_.data(), 2 * (real_popnum_ / 2));
 			MergePopulation(g_GlobalSettings->parent_population_.data(), real_popnum_, g_GlobalSettings->offspring_population_.data(),
-				2 * (real_popnum_ / 2), g_GlobalSettings->mixed_population_.data());
+							2 * (real_popnum_ / 2), g_GlobalSettings->mixed_population_.data());
 			// select next generation's population
 			EnvironmentalSelection(g_GlobalSettings->parent_population_.data(), g_GlobalSettings->mixed_population_.data());
 		}
@@ -67,10 +67,10 @@ namespace emoc {
 			Individual *parent1 = TournamentByRank(parent_pop[index1[2 * i]], parent_pop[index1[2 * i + 1]]);
 			Individual *parent2 = TournamentByRank(parent_pop[index2[2 * i]], parent_pop[index2[2 * i + 1]]);
 			SBX(parent1, parent2, offspring_pop[2 * i], offspring_pop[2 * i + 1],
-				g_GlobalSettings->dec_lower_bound_, g_GlobalSettings->dec_upper_bound_, cross_para_);
+				g_GlobalSettings->dec_space_, cross_para_);
 		}
 	}
-	
+
 	void NSGA2::SetDistanceInfo(std::vector<DistanceInfo> &distanceinfo_vec, int target_index, double distance)
 	{
 		// search the target_index and set it's distance
@@ -84,12 +84,11 @@ namespace emoc {
 		}
 	}
 
-
-	int NSGA2::CrowdingDistance(Individual **mixed_pop,  int pop_num, int *pop_sort, int rank_index)
+	int NSGA2::CrowdingDistance(Individual **mixed_pop, int pop_num, int *pop_sort, int rank_index)
 	{
 		int num_in_rank = 0;
 		std::vector<int> sort_arr(pop_num, 0);
-		std::vector<DistanceInfo> distanceinfo_vec(pop_num, { -1,0.0 });
+		std::vector<DistanceInfo> distanceinfo_vec(pop_num, {-1, 0.0});
 
 		// find all the indviduals with rank rank_index
 		for (int i = 0; i < pop_num; i++)
@@ -106,9 +105,8 @@ namespace emoc {
 		for (int i = 0; i < g_GlobalSettings->obj_num_; i++)
 		{
 			// sort the population with i-th obj
-			std::sort(sort_arr.begin(), sort_arr.begin()+num_in_rank, [=](int left, int right){
-				return mixed_pop[left]->obj_[i] < mixed_pop[right]->obj_[i];
-			});
+			std::sort(sort_arr.begin(), sort_arr.begin() + num_in_rank, [=](int left, int right)
+					  { return mixed_pop[left]->obj_[i] < mixed_pop[right]->obj_[i]; });
 
 			// set the first and last individual with INF fitness (crowding distance)
 			mixed_pop[sort_arr[0]]->fitness_ = EMOC_INF;
@@ -128,7 +126,7 @@ namespace emoc {
 					else
 					{
 						double distance = (mixed_pop[sort_arr[j + 1]]->obj_[i] - mixed_pop[sort_arr[j - 1]]->obj_[i]) /
-							(mixed_pop[sort_arr[num_in_rank - 1]]->obj_[i] - mixed_pop[sort_arr[0]]->obj_[i]);
+										  (mixed_pop[sort_arr[num_in_rank - 1]]->obj_[i] - mixed_pop[sort_arr[0]]->obj_[i]);
 						mixed_pop[sort_arr[j]]->fitness_ += distance;
 						SetDistanceInfo(distanceinfo_vec, sort_arr[j], distance);
 					}
@@ -136,9 +134,8 @@ namespace emoc {
 			}
 		}
 
-		std::sort(distanceinfo_vec.begin(), distanceinfo_vec.begin()+num_in_rank, [](DistanceInfo &left, DistanceInfo &right) {
-			return left.distance < right.distance;
-		});
+		std::sort(distanceinfo_vec.begin(), distanceinfo_vec.begin() + num_in_rank, [](DistanceInfo &left, DistanceInfo &right)
+				  { return left.distance < right.distance; });
 
 		// copy sort result
 		for (int i = 0; i < num_in_rank; i++)
@@ -198,7 +195,8 @@ namespace emoc {
 					CopyIndividual(mixed_pop[pop_sort[--sort_num]], parent_pop[current_popnum]);
 					current_popnum++;
 				}
-				else {
+				else
+				{
 					break;
 				}
 			}

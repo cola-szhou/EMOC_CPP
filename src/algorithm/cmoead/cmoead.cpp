@@ -13,18 +13,17 @@
 #include "operator/polynomial_mutation.h"
 #include "random/random.h"
 
-namespace emoc {
+namespace emoc
+{
 
-	CMOEAD::CMOEAD(Py_Global* global, Problem* problem) :
-		Algorithm(global, problem),
-		lambda_(nullptr),
-		weight_num_(0),
-		neighbour_(nullptr),
-		ideal_point_(new double[g_GlobalSettings->obj_num_]), 
-		neighbour_selectpro_(0.9),
-		pbi_theta_(5.0)
+	CMOEAD::CMOEAD(Py_Global *global, Problem *problem) : Algorithm(global, problem),
+														  lambda_(nullptr),
+														  weight_num_(0),
+														  neighbour_(nullptr),
+														  ideal_point_(new double[g_GlobalSettings->obj_num_]),
+														  neighbour_selectpro_(0.9),
+														  pbi_theta_(5.0)
 	{
-
 	}
 
 	CMOEAD::~CMOEAD()
@@ -50,7 +49,7 @@ namespace emoc {
 		Individual *offspring = g_GlobalSettings->offspring_population_[0];
 
 		while (!IsTermination())
-		{	
+		{
 			for (int i = 0; i < weight_num_; ++i)
 			{
 				// set current iteration's neighbour type
@@ -59,15 +58,15 @@ namespace emoc {
 				else
 					neighbour_type_ = GLOBAL;
 
-                // generate offspring for current subproblem
+				// generate offspring for current subproblem
 				Crossover(g_GlobalSettings->parent_population_.data(), i, offspring);
-				PolynomialMutationIndividual(offspring, g_GlobalSettings->dec_lower_bound_, g_GlobalSettings->dec_upper_bound_, mutation_para_);
+				PolynomialMutationIndividual(offspring, g_GlobalSettings->dec_space_, mutation_para_);
 				EvaluateInd(offspring);
 
 				// update ideal point
 				UpdateIdealpoint(offspring, ideal_point_, g_GlobalSettings->obj_num_);
 
-				// update neighbours' subproblem 
+				// update neighbours' subproblem
 				UpdateSubproblem(offspring, i);
 			}
 		}
@@ -100,10 +99,10 @@ namespace emoc {
 	}
 
 	void CMOEAD::SetNeighbours()
-	{	
+	{
 		// set neighbour size and allocate memory
 		neighbour_num_ = weight_num_ / 10;
-		neighbour_ = new int*[weight_num_];
+		neighbour_ = new int *[weight_num_];
 		for (int i = 0; i < weight_num_; ++i)
 		{
 			neighbour_[i] = new int[neighbour_num_];
@@ -125,13 +124,12 @@ namespace emoc {
 				sort_list[j].index = j;
 			}
 
-			std::sort(sort_list.begin(), sort_list.end(), [](DistanceInfo &left, DistanceInfo &right) {
-				return left.distance < right.distance;
-			});	
+			std::sort(sort_list.begin(), sort_list.end(), [](DistanceInfo &left, DistanceInfo &right)
+					  { return left.distance < right.distance; });
 
 			for (int j = 0; j < neighbour_num_; j++)
 			{
-				neighbour_[i][j] = sort_list[j+1].index;
+				neighbour_[i][j] = sort_list[j + 1].index;
 			}
 		}
 	}
@@ -153,11 +151,11 @@ namespace emoc {
 			parent2_index = rnd(0, size - 1);
 		}
 
-		Individual* parent1 = parent_pop[parent1_index];
-		Individual* parent2 = parent_pop[parent2_index];
+		Individual *parent1 = parent_pop[parent1_index];
+		Individual *parent2 = parent_pop[parent2_index];
 
 		SBX(parent1, parent2, offspring, g_GlobalSettings->offspring_population_[1],
-			g_GlobalSettings->dec_lower_bound_,g_GlobalSettings->dec_upper_bound_,cross_para_);
+			g_GlobalSettings->dec_space_, cross_para_);
 	}
 
 	void CMOEAD::UpdateSubproblem(Individual *offspring, int current_index)
@@ -177,7 +175,7 @@ namespace emoc {
 			else
 				weight_index = perm_index[i];
 
-			Individual* current_ind = g_GlobalSettings->parent_population_[weight_index];
+			Individual *current_ind = g_GlobalSettings->parent_population_[weight_index];
 
 			// get constraint values
 			double CVO = 0.0, CVP = 0.0;
@@ -190,7 +188,6 @@ namespace emoc {
 			neighbour_fitness = CalPBI(current_ind, lambda_[weight_index], ideal_point_, g_GlobalSettings->obj_num_, pbi_theta_);
 			offspring_fitness = CalPBI(offspring, lambda_[weight_index], ideal_point_, g_GlobalSettings->obj_num_, pbi_theta_);
 
-
 			// update subproblem
 			if ((offspring_fitness <= neighbour_fitness && std::fabs(CVO - CVP) < EMOC_EPS) || CVO < CVP)
 			{
@@ -198,7 +195,8 @@ namespace emoc {
 				replace_num++;
 			}
 
-			if (replace_num >= nr_) break;
+			if (replace_num >= nr_)
+				break;
 		}
 	}
 }

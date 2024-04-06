@@ -7,6 +7,7 @@
 #include <typeinfo>
 #include <pybind11/pybind11.h>
 #include "problem/problem.h"
+#include "core/variable.h"
 
 namespace py = pybind11;
 
@@ -36,30 +37,8 @@ namespace emoc
 
 	void Py_Global::InitializeIndividual(Individual *ind, Problem *problem_)
 	{
-		if (problem_->encoding_ == Problem::REAL)
-		{
-			for (int i = 0; i < dec_num_; ++i)
-			{
-				ind->dec_[i] = rndreal(dec_lower_bound_[i], dec_upper_bound_[i]);
-			}
-		}
-		else if (problem_->encoding_ == Problem::BINARY)
-		{
-			for (int i = 0; i < dec_num_; ++i)
-				ind->dec_[i] = rnd(0, 1);
-		}
-		else if (problem_->encoding_ == Problem::INTEGER)
-		{
-			for (int i = 0; i < dec_num_; ++i)
-				ind->dec_[i] = rnd(dec_lower_bound_[i], dec_upper_bound_[i]);
-		}
-		else if (problem_->encoding_ == Problem::PERMUTATION)
-		{
-			std::vector<int> perm(dec_num_);
-			random_permutation(perm.data(), perm.size());
-			for (int i = 0; i < dec_num_; ++i)
-				ind->dec_[i] = perm[i];
-		}
+		for (int i = 0; i < dec_num_; i++)
+			ind->dec_[i] = dec_space_.Sample(i);
 	}
 
 	void Py_Global::Restart()
@@ -97,7 +76,7 @@ namespace emoc
 		population_num_ = pop_num;
 	}
 
-	void Py_Global::SetParam(int dec_num, int obj_num, std::vector<double> lower_bound, std::vector<double> upper_bound, int population_num, int output_interval, int max_evaluation)
+	void Py_Global::SetParam(int dec_num, int obj_num, DecisionSpace dec_space, int population_num, int output_interval, int max_evaluation)
 	{
 		dec_num_ = dec_num;
 		obj_num_ = obj_num;
@@ -107,13 +86,15 @@ namespace emoc
 		is_customized_init_pop_ = false;
 		output_interval_ = output_interval;
 		max_evaluation_ = max_evaluation;
-		dec_lower_bound_ = std::vector<double>(dec_num_);
-		dec_upper_bound_ = std::vector<double>(dec_num_);
-		for (int i = 0; i < dec_num_; i++)
-		{
-			dec_lower_bound_[i] = lower_bound[i];
-			dec_upper_bound_[i] = upper_bound[i];
-		}
+		// dec_lower_bound_ = std::vector<double>(dec_num_);
+		// dec_upper_bound_ = std::vector<double>(dec_num_);
+
+		// for (int i = 0; i < dec_num_; i++)
+		// {
+		// 	dec_lower_bound_[i] = lower_bound[i];
+		// 	dec_upper_bound_[i] = upper_bound[i];
+		// }
+		dec_space_ = dec_space;
 
 		// reserve population space
 		parent_population_.reserve(population_num_);

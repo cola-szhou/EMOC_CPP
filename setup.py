@@ -13,7 +13,7 @@ import sys
 from distutils import spawn
 from distutils.sysconfig import get_python_lib
 
-__version__ = "0.0.1"
+__version__ = "0.0.1-alpha.1"
 
 
 # Define the CMake extension

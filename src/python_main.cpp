@@ -3,12 +3,12 @@
 #include <sstream>
 
 #include "problem/problem.h"
+#include "problem/problem_head_collect.h"
 #include "core/individual.h"
 #include "core/emoc_utility_structures.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
 #include "pybind11/numpy.h"
-#include "problem/problem_head_collect.h"
 #include "algorithm/algorithm_head_collect.h"
 #include "core/py_global.h"
 #include "operator/bit_mutation.h"
@@ -23,6 +23,8 @@
 #include "core/uniform_point.h"
 #include "core/utility.h"
 #include "metric/metric_head_collect.h"
+#include "core/variable.h"
+#include "random/random.h"
 
 // using emoc::EMOCManager;
 // using emoc::Individual;
@@ -61,6 +63,38 @@ namespace emoc
 				ind);
 		}
 	};
+
+	pybind11::object VariantValueToPyObject(const emoc::VariantValue &value)
+	{
+		return std::visit([](auto &&arg) -> pybind11::object
+						  { return pybind11::cast(arg); },
+						  value);
+	}
+
+	VariantValue PyObjectToVariantValue(const py::handle &obj)
+	{
+		if (py::isinstance<py::bool_>(obj))
+		{
+			return obj.cast<bool>();
+		}
+		else if (py::isinstance<py::int_>(obj))
+		{
+			return obj.cast<int>();
+		}
+		else if (py::isinstance<py::float_>(obj))
+		{
+			return obj.cast<double>();
+		}
+		else if (py::isinstance<py::str>(obj))
+		{
+			return obj.cast<std::string>();
+		}
+		else if (py::isinstance<py::list>(obj))
+		{
+			return obj.cast<std::vector<int>>();
+		}
+		throw std::runtime_error("Type not supported.");
+	}
 
 	class ArrayWrapper
 	{
@@ -154,8 +188,124 @@ namespace emoc
 				throw std::out_of_range("Index out of bounds");
 		}
 	};
-}
 
+	class VariantArrayWrapper
+	{
+	public:
+		VariantArrayWrapper(std::vector<emoc::VariantValue> &vec) : m_vector(vec) {}
+		py::object get(py::slice slice)
+		{
+			size_t start, stop, step, slicelength;
+			if (!slice.compute(m_vector.size(), &start, &stop, &step, &slicelength))
+				throw py::error_already_set();
+			std::vector<emoc::VariantValue> result;
+			result.reserve(slicelength);
+			for (size_t i = 0; i < slicelength; ++i)
+			{
+				result.push_back(m_vector[start]);
+				start += step;
+			}
+			return py::cast(result);
+		}
+
+		py::object get(size_t index)
+		{
+			check_index(index);
+			return py::cast(m_vector[index]);
+		}
+
+		py::object get()
+		{
+			std::cout << "get all" << std::endl;
+			return py::cast(m_vector);
+		}
+
+		void set(py::slice slice, const std::vector<emoc::VariantValue> &value)
+		{
+			size_t start, stop, step, slicelength;
+			if (!slice.compute(m_vector.size(), &start, &stop, &step, &slicelength))
+				throw py::error_already_set();
+			if (slicelength != value.size())
+				throw std::runtime_error("Left and right hand size of slice assignment have different sizes!");
+			for (size_t i = 0; i < slicelength; ++i)
+			{
+				m_vector[start + i * step] = value[i];
+			}
+		}
+
+		void set(size_t index, emoc::VariantValue value)
+		{
+			check_index(index);
+			m_vector[index] = value;
+		}
+
+		void set(const std::vector<emoc::VariantValue> &value)
+		{
+			if (value.size() != m_vector.size())
+				throw std::runtime_error("Left and right hand size of slice assignment have different sizes!");
+			m_vector = value;
+		}
+
+		int size()
+		{
+			return m_vector.size();
+		}
+
+		std::string to_string() const
+		{
+			std::stringstream ss;
+			ss << "[";
+			for (size_t i = 0; i < m_vector.size(); ++i)
+			{
+				if (i > 0)
+					ss << ", ";
+				ss << variantValueToString(m_vector[i]);
+			}
+			ss << "]";
+			return ss.str();
+		}
+
+		void append(emoc::VariantValue value)
+		{
+			m_vector.push_back(value);
+		}
+
+	private:
+		std::vector<emoc::VariantValue> &m_vector;
+
+		void check_index(size_t index)
+		{
+			if (index >= m_vector.size())
+				throw std::out_of_range("Index out of bounds");
+		}
+
+		std::string variantValueToString(const VariantValue &value) const
+		{
+			return std::visit([](auto &&arg) -> std::string
+							  {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, bool>) {
+                return arg ? "true" : "false";
+            } else if constexpr (std::is_same_v<T, int> || std::is_same_v<T, double>) {
+                return std::to_string(arg);
+            } else if constexpr (std::is_same_v<T, std::string>) {
+                return arg; // Directly return the string
+            } else if constexpr (std::is_same_v<T, std::vector<int>>) {
+                std::stringstream ss;
+                ss << "[";
+                for (size_t i = 0; i < arg.size(); i++) {
+                    ss << arg[i];
+                    if (i != arg.size() - 1) ss << ", ";
+                }
+                ss << "]";
+                return ss.str();
+            } else {
+                return "unknown type";
+            } },
+							  value);
+		}
+	};
+}
 void bindOperators(py::module &m)
 {
 	py::class_<emoc::MutationParameter>(m, "MutationParameter")
@@ -241,6 +391,7 @@ void bindProblems(py::module &m)
 		.def("CalCon", &emoc::Problem::CalCon)
 		.def_readwrite("dec_num_", &emoc::Problem::dec_num_)
 		.def_readwrite("obj_num_", &emoc::Problem::obj_num_)
+		.def_readwrite("dec_space_", &emoc::Problem::dec_space_)
 		.def_property(
 			"lower_bound_",
 			[](emoc::Problem &p)
@@ -264,12 +415,13 @@ void bindProblems(py::module &m)
 		.def_readwrite("encoding_", &emoc::Problem::encoding_)
 		.def_readwrite("problem_name_", &emoc::Problem::problem_name_);
 
-	py::enum_<emoc::Problem::EncodingType>(m, "EncodingType")
-		.value("REAL", emoc::Problem::REAL)
-		.value("BINARY", emoc::Problem::BINARY)
-		.value("INTEGER", emoc::Problem::INTEGER)
-		.value("PERMUTATION", emoc::Problem::PERMUTATION)
-		.value("MIXED", emoc::Problem::MIXED);
+	py::enum_<EncodingType>(m, "EncodingType")
+		.value("REAL", REAL)
+		.value("BINARY", BINARY)
+		.value("INTEGER", INTEGER)
+		.value("CATEGORICAL", CATEGORICAL)
+		.value("PERMUTATION", PERMUTATION)
+		.value("MIXED", MIXED);
 
 	// define ZDT problems
 	py::class_<emoc::ZDT1, emoc::Problem>(m, "ZDT1")
@@ -421,25 +573,19 @@ PYBIND11_MODULE(EMOC, m)
 		.def(py::init<int, int>())
 		.def_property(
 			"dec_", [](emoc::Individual &ind)
-			{ return emoc::ArrayWrapper(ind.dec_); },
-			[](emoc::Individual &ind, const std::vector<double> &value)
-			{
-				ind.dec_ = value;
-			})
+			{ return emoc::VariantArrayWrapper(ind.dec_); },
+			[](emoc::Individual &ind, const std::vector<emoc::VariantValue> &value)
+			{ ind.dec_ = value; })
 		.def_property(
 			"obj_", [](emoc::Individual &ind)
 			{ return emoc::ArrayWrapper(ind.obj_); },
 			[](emoc::Individual &ind, const std::vector<double> &value)
-			{
-				ind.obj_ = value;
-			})
+			{ ind.obj_ = value; })
 		.def_property(
 			"con_", [](emoc::Individual &ind)
 			{ return emoc::ArrayWrapper(ind.con_); },
 			[](emoc::Individual &ind, const std::vector<double> &value)
-			{
-				ind.con_ = value;
-			})
+			{ ind.con_ = value; })
 		.def_readwrite("rank_", &emoc::Individual::rank_)
 		.def_readwrite("fitness_", &emoc::Individual::fitness_);
 
@@ -467,21 +613,21 @@ PYBIND11_MODULE(EMOC, m)
 		.def_readwrite("obj_num_", &emoc::Py_Global::obj_num_)
 		.def_readwrite("max_evaluation_", &emoc::Py_Global::max_evaluation_)
 		.def_readwrite("output_interval_", &emoc::Py_Global::output_interval_)
-		.def_readwrite("record_", &emoc::Py_Global::record_)
-		.def_property(
-			"dec_lower_bound_", [](emoc::Py_Global &g)
-			{ return emoc::ArrayWrapper(g.dec_lower_bound_); },
-			[](emoc::Py_Global &g, const std::vector<double> &value)
-			{
-				g.dec_lower_bound_ = value;
-			})
-		.def_property(
-			"dec_upper_bound_", [](emoc::Py_Global &g)
-			{ return emoc::ArrayWrapper(g.dec_upper_bound_); },
-			[](emoc::Py_Global &g, const std::vector<double> &value)
-			{
-				g.dec_upper_bound_ = value;
-			});
+		.def_readwrite("record_", &emoc::Py_Global::record_);
+	// .def_property(
+	// 	"dec_lower_bound_", [](emoc::Py_Global &g)
+	// 	{ return emoc::ArrayWrapper(g.dec_lower_bound_); },
+	// 	[](emoc::Py_Global &g, const std::vector<double> &value)
+	// 	{
+	// 		g.dec_lower_bound_ = value;
+	// 	})
+	// .def_property(
+	// 	"dec_upper_bound_", [](emoc::Py_Global &g)
+	// 	{ return emoc::ArrayWrapper(g.dec_upper_bound_); },
+	// 	[](emoc::Py_Global &g, const std::vector<double> &value)
+	// 	{
+	// 		g.dec_upper_bound_ = value;
+	// 	});
 
 	py::class_<emoc::ArrayWrapper>(m, "ArrayWrapper")
 		.def("__getitem__", [](emoc::ArrayWrapper &a, py::handle h)
@@ -505,6 +651,78 @@ PYBIND11_MODULE(EMOC, m)
 		.def("__repr__", &emoc::ArrayWrapper::to_string)
 		.def("__str__", &emoc::ArrayWrapper::to_string)
 		.def("append", &emoc::ArrayWrapper::append);
+
+	py::class_<emoc::VariantArrayWrapper>(m, "VariantArrayWrapper")
+		.def("__getitem__", [](emoc::VariantArrayWrapper &a, py::handle h)
+			 {
+			if (h.is_none()) {
+				return a.get();
+			}
+			else if (py::isinstance<py::slice>(h)) {
+				return a.get(h.cast<py::slice>());
+			}
+			else {
+				return a.get(h.cast<size_t>());
+			} })
+		.def("__setitem__", [](emoc::VariantArrayWrapper &a, py::slice slice, const std::vector<emoc::VariantValue> &value)
+			 { a.set(slice, value); })
+		.def("__setitem__", [](emoc::VariantArrayWrapper &a, size_t index, emoc::VariantValue value)
+			 { a.set(index, value); })
+		.def("__setitem__", [](emoc::VariantArrayWrapper &a, const std::vector<emoc::VariantValue> &value)
+			 { a.set(value); })
+		.def("__len__", &emoc::VariantArrayWrapper::size)
+		.def("__repr__", &emoc::VariantArrayWrapper::to_string)
+		.def("__str__", &emoc::VariantArrayWrapper::to_string)
+		.def("append", &emoc::VariantArrayWrapper::append);
+
+	py::class_<emoc::Variable, std::shared_ptr<emoc::Variable>>(m, "Variable")
+		.def(py::init<std::string>())
+		.def_readwrite("encoding_", &emoc::Variable::encoding_)
+		.def_readwrite("name_", &emoc::Variable::name_);
+
+	py::class_<emoc::BinaryVariable, emoc::Variable, std::shared_ptr<emoc::BinaryVariable>>(m, "BinaryVariable")
+		.def(py::init<>())
+		.def_readwrite("encoding_", &emoc::BinaryVariable::encoding_)
+		.def_readwrite("name_", &emoc::BinaryVariable::name_)
+		.def("Sample", &emoc::BinaryVariable::Sample);
+
+	py::class_<emoc::RealVariable, emoc::Variable, std::shared_ptr<emoc::RealVariable>>(m, "RealVariable")
+		.def(py::init<double, double, std::string>())
+		.def_readwrite("encoding_", &emoc::RealVariable::encoding_)
+		.def_readwrite("name_", &emoc::RealVariable::name_)
+		.def("Sample", &emoc::RealVariable::Sample);
+
+	py::class_<emoc::IntegerVariable, emoc::Variable, std::shared_ptr<emoc::IntegerVariable>>(m, "IntegerVariable")
+		.def(py::init<int, int, std::string>())
+		.def_readwrite("encoding_", &emoc::IntegerVariable::encoding_)
+		.def_readwrite("name_", &emoc::IntegerVariable::name_)
+		.def("Sample", &emoc::IntegerVariable::Sample);
+
+	py::class_<emoc::CategoricalVariable, emoc::Variable, std::shared_ptr<emoc::CategoricalVariable>>(m, "CategoricalVariable")
+		.def(py::init<std::vector<std::string>, std::string>())
+		.def_readwrite("encoding_", &emoc::CategoricalVariable::encoding_)
+		.def_readwrite("name_", &emoc::CategoricalVariable::name_)
+		.def("Sample", &emoc::CategoricalVariable::Sample);
+
+	py::class_<emoc::PermutationVariable, emoc::Variable, std::shared_ptr<emoc::PermutationVariable>>(m, "PermutationVariable")
+		.def(py::init<int, std::string>())
+		.def_readwrite("encoding_", &emoc::PermutationVariable::encoding_)
+		.def_readwrite("name_", &emoc::PermutationVariable::name_)
+		.def("Sample", &emoc::PermutationVariable::Sample);
+
+	m.def("randomize", &randomize, "Randomize the seed");
+
+	py::class_<emoc::DecisionSpace>(m, "DecisionSpace")
+		.def(py::init<>())
+		.def(py::init<std::vector<emoc::VariantType>>())
+		.def("AddVariable", &emoc::DecisionSpace::AddVariable)
+		.def("RemoveVariable", &emoc::DecisionSpace::RemoveVariable)
+		.def("ModifyVariable", &emoc::DecisionSpace::ModifyVariable)
+		.def("GetLowerBound", &emoc::DecisionSpace::GetLowerBound)
+		.def("GetUpperBound", &emoc::DecisionSpace::GetUpperBound)
+		.def("Sample", &emoc::DecisionSpace::Sample)
+		.def("GetCategoricalSpace", &emoc::DecisionSpace::GetCategoricalSpace)
+		.def_readwrite("space_", &emoc::DecisionSpace::space_);
 
 	// *******Operators*******
 	bindOperators(m);

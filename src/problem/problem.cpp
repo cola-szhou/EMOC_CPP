@@ -1,23 +1,19 @@
 #include "problem/problem.h"
 
-namespace emoc {
+namespace emoc
+{
 
-	Problem::Problem(int dec_num, int obj_num) :
-		dec_num_(dec_num), obj_num_(obj_num)
+	Problem::Problem(int dec_num, int obj_num) : dec_num_(dec_num), obj_num_(obj_num), problem_name_("Problem"), dec_space_(DecisionSpace())
 	{
-		lower_bound_.resize(dec_num);
-		upper_bound_.resize(dec_num);
-
 		// the default encoding type is REAL
 		encoding_ = REAL;
 	}
 
 	Problem::~Problem()
 	{
-
 	}
 
-	void Problem::CalCon(Individual* ind)
+	void Problem::CalCon(Individual *ind)
 	{
 		// do nothing
 	}

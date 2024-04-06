@@ -6,7 +6,8 @@
 
 #include <vector>
 
-namespace emoc {
+namespace emoc
+{
 
 	class NSGA2 : public Algorithm
 	{
@@ -15,11 +16,11 @@ namespace emoc {
 		{
 			int index;
 			double distance;
-		}DistanceInfo;  // store crowding distance of index-th individual
+		} DistanceInfo; // store crowding distance of index-th individual
 
-		NSGA2(Py_Global* globalm, Problem* problem, double crossover_prob, double eta_c, double mutation_prob, double eta_m);
+		NSGA2(Py_Global *globalm, Problem *problem, double crossover_prob, double eta_c, double mutation_prob, double eta_m);
 		virtual ~NSGA2();
-		
+
 		void Solve();
 
 	private:

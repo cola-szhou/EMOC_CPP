@@ -6,16 +6,17 @@
 #include "core/individual.h"
 // #include "core/emoc_manager.h"
 
-namespace emoc {
+namespace emoc
+{
 
 	// Copy file from src to dest
-	void CopyFile(const char* src, const char* dest);
+	void CopyFile(const char *src, const char *dest);
 
 	// Create dirtectory path
-	int CreateDirectory(const std::string& path);
+	int CreateDirectory(const std::string &path);
 
-	// Read population data from file 
-	std::vector<std::vector<double>> ReadPop(char* filepath, int obj_num);
+	// Read population data from file
+	std::vector<std::vector<double>> ReadPop(char *filepath, int obj_num);
 
 	// Write population data to file
 	// void RecordPop(int run_index, int generation, Py_Global* para, int real_popnum);

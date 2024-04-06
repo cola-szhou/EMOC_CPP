@@ -1,21 +1,27 @@
 #include "operator/bit_mutation.h"
 
 #include <cmath>
-
 #include "random/random.h"
 
-namespace emoc {
+// BitFlipMutation is for binary encoding
 
-	void BitFlipMutation(Individual* ind, MutationParameter& mutation_para)
+namespace emoc
+{
+
+	void BitFlipMutation(Individual *ind, MutationParameter &mutation_para)
 	{
-		int dec_num = ind->dec_.size();
 
-		for (int i = 0; i < dec_num; i++)
+		for (auto &value : ind->dec_)
 		{
-			if (randomperc() < mutation_para.pro)
-				ind->dec_[i] = 1 - ind->dec_[i];
+			std::visit([&](auto &&dec)
+					   {
+				using T = std::decay_t<decltype(dec)>;
+				if constexpr(std::is_same_v<T, bool>){
+					if (randomperc() < mutation_para.pro)
+						dec = !dec;
+				} },
+					   value);
 		}
 	}
 
 }
-
